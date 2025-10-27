@@ -1,0 +1,5 @@
+project_open MulticycleCPU
+create_timing_netlist
+read_sdc
+update_timing_netlist
+report_clock_fmax_summary
