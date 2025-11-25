@@ -1,6 +1,6 @@
 module control_unit (
 	input wire [5:0] opcode, 
-	input wire z, s,
+	input wire zero, sign, carry, overflow,
 	input wire clk,
 	input wire reset,
 	output reg s_addr, s_io_wr, we3, push, pop,
@@ -30,8 +30,9 @@ module control_unit (
 	parameter HALT = 6'b000001;
 	parameter ALU = 6'b111???;
 	parameter J = 6'b110000;
-	parameter JPOS = 6'b110001;
-	parameter JAL = 6'b11010?;
+	parameter JG_S = 6'b110100;
+	parameter JG = 6'b110001;
+	parameter JAL = 6'b110101;
 	parameter JR = 6'b11011?;
 	parameter JZ = 6'b110011;
 	parameter JNZ = 6'b110010;
@@ -62,7 +63,8 @@ module control_unit (
 					JR: nextstate = JI;
 					JZ: nextstate = JC;
 					JNZ: nextstate = JC;
-					JPOS: nextstate = JC;
+					JG: nextstate = JC;
+					JG_S: nextstate = JC;
 					LI: nextstate = EX;
 					LW_ADDR_R: nextstate = RMEM;
 					LW_R_R: nextstate = RMEM;
@@ -87,7 +89,6 @@ module control_unit (
 	always @(*) begin
 		casez(state)
 			IFRESET: begin
-				//we_next_pc <= 1'b0;
 				we_pc <= 1'b0;
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
@@ -99,8 +100,6 @@ module control_unit (
 				halted <= 1'b0;
 			end
 			IF: begin
-				// PC -> enable
-				//we_next_pc <= 1'b0;
 				we_pc <= 1'b1;
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
@@ -112,8 +111,6 @@ module control_unit (
 				halted <= 1'b0;
 			end
 			ID: begin
-				// PC -> disable
-				//we_next_pc <= 1'b0;
 				we_pc <= 1'b0;
 				we_reg <= 1'b1;
 				we_alu <= 1'b0;
@@ -125,8 +122,6 @@ module control_unit (
 				halted <= 1'b0;
 			end
 			EX: begin
-				// PC -> disable
-				//we_next_pc <= 1'b0;
 				we_pc <= 1'b0;
 				we_reg <= 1'b0;
 				we_alu <= 1'b1;
@@ -138,8 +133,6 @@ module control_unit (
 				halted <= 1'b0;
 			end
 			WB: begin
-				// PC -> disable
-				//we_next_pc <= 1'b1;
 				we_pc <= 1'b0;
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
@@ -151,7 +144,6 @@ module control_unit (
 				halted <= 1'b0;
 			end
 			JI: begin
-				//we_next_pc <= 1'b1;
 				we_pc <= 1'b0;
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
@@ -163,7 +155,6 @@ module control_unit (
 				halted <= 1'b0;
 			end
 			JC: begin
-				//we_next_pc <= 1'b1;
 				we_pc <= 1'b0;
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
@@ -175,7 +166,6 @@ module control_unit (
 				halted <= 1'b0;
 			end
 			RMEM: begin
-				//we_next_pc <= 1'b0;
 				we_pc <= 1'b0;
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
@@ -187,7 +177,6 @@ module control_unit (
 				halted <= 1'b0;
 			end
 			WMEM: begin
-				//we_next_pc <= 1'b0;
 				we_pc <= 1'b0;
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
@@ -199,7 +188,6 @@ module control_unit (
 				halted <= 1'b0;
 			end
 			HALTED: begin
-				//we_next_pc <= 1'b0;
 				we_pc <= 1'b0;
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
@@ -211,7 +199,6 @@ module control_unit (
 				halted <= 1'b1;
 			end
 			default: begin
-				//we_next_pc <= 1'b0;
 				we_pc <= 1'b0;
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
@@ -234,9 +221,6 @@ module control_unit (
 				s_wd3 <= 2'b00;
 				s_io_wr <= 1'b0; // don't care
 				s_addr <= 1'b0; // don't care
-				//we3 <= 1'b1;
-				//wez <= 1'b1;
-				//wes <= 1'b1;
 				op_alu <= opcode[2:0];
 				push <= 1'b0;
 				pop <= 1'b0;
@@ -247,22 +231,26 @@ module control_unit (
 				s_wd3 <= 2'b00; // don't care
 				s_io_wr <= 1'b0; // don't care
 				s_addr <= 1'b0; // don't care
-				//we3 <= 1'b0;
-				//wez <= 1'b0;
-				//wes <= 1'b0;
 				op_alu <= 3'b000;
 				push <= 1'b0;
 				pop <= 1'b0;
 			end
 			
-			JPOS: begin // JPOS
-				s_pc <= (~z && ~s) ? 2'b01 : 2'b00;
+			JG: begin // JG
+				s_pc <= (~zero && ~sign) ? 2'b01 : 2'b00;
 				s_wd3 <= 2'b00; // don't care
 				s_io_wr <= 1'b0; // don't care
 				s_addr <= 1'b0; // don't care
-				//we3 <= 1'b0;
-				//wez <= 1'b0;
-				//wes <= 1'b0;
+				op_alu <= 3'b000; //don't care
+				push <= 1'b0;
+				pop <= 1'b0;
+			end
+			
+			JG_S: begin // JG
+				s_pc <= (~zero && ~(sign ^ overflow)) ? 2'b01 : 2'b00;
+				s_wd3 <= 2'b00; // don't care
+				s_io_wr <= 1'b0; // don't care
+				s_addr <= 1'b0; // don't care
 				op_alu <= 3'b000; //don't care
 				push <= 1'b0;
 				pop <= 1'b0;
@@ -273,9 +261,6 @@ module control_unit (
 				s_wd3 <= 2'b00; // don't care
 				s_io_wr <= 1'b0; // don't care
 				s_addr <= 1'b0; // don't care
-				//we3 <= 1'b0;
-				//wez <= 1'b0;
-				//wes <= 1'b0;
 				op_alu <= 3'b000;
 				if (state == IF)
 					push <= 1'b1;
@@ -289,9 +274,6 @@ module control_unit (
 				s_wd3 <= 2'b00; // don't care
 				s_io_wr <= 1'b0; // don't care
 				s_addr <= 1'b0; // don't care
-				//we3 <= 1'b0;
-				//wez <= 1'b0;
-				//wes <= 1'b0;
 				op_alu <= 3'b000;
 				push <= 1'b0;
 				if (state == IF)
@@ -301,26 +283,20 @@ module control_unit (
 			end
 			
 			JZ: begin // JZ
-				s_pc <= z ? 2'b01 : 2'b00;
+				s_pc <= zero ? 2'b01 : 2'b00;
 				s_wd3 <= 2'b00; // don't care
 				s_io_wr <= 1'b0; // don't care
 				s_addr <= 1'b0; // don't care
-				//we3 <= 1'b0;
-				//wez <= 1'b0;
-				//wes <= 1'b0;
 				op_alu <= 3'b000; //don't care
 				push <= 1'b0;
 				pop <= 1'b0;
 			end
 			
 			JNZ: begin // JNZ
-				s_pc <= z ? 2'b00 : 2'b01;
+				s_pc <= zero ? 2'b00 : 2'b01;
 				s_wd3 <= 2'b00; // don't care
 				s_io_wr <= 1'b0; // don't care
 				s_addr <= 1'b0; // don't care
-				//we3 <= 1'b0;
-				//wez <= 1'b0;
-				//wes <= 1'b0;
 				op_alu <= 3'b000; // don't care
 				push <= 1'b0;
 				pop <= 1'b0;
@@ -331,9 +307,6 @@ module control_unit (
 				s_wd3 <= 2'b01; 
 				s_io_wr <= 1'b0; // don't care
 				s_addr <= 1'b0; // don't care
-				//we3 <= 1'b1;
-				//wez <= 1'b0;
-				//wes <= 1'b0;
 				op_alu <= 3'b000; // don't care
 				push <= 1'b0;
 				pop <= 1'b0;
@@ -344,9 +317,6 @@ module control_unit (
 				s_wd3 <= 2'b10; 
 				s_io_wr <= 1'b0; // don't care
 				s_addr <= 1'b1;
-				//we3 <= 1'b1;
-				//wez <= 1'b0;
-				//wes <= 1'b0;
 				op_alu <= 3'b000; // don't care
 				push <= 1'b0;
 				pop <= 1'b0;
@@ -357,9 +327,6 @@ module control_unit (
 				s_wd3 <= 2'b10; 
 				s_io_wr <= 1'b0; // don't care
 				s_addr <= 1'b0;
-				//we3 <= 1'b1;
-				//wez <= 1'b0;
-				//wes <= 1'b0;
 				op_alu <= 3'b000; // don't care
 				push <= 1'b0;
 				pop <= 1'b0;
@@ -370,9 +337,6 @@ module control_unit (
 				s_wd3 <= 2'b00; // don't care
 				s_io_wr <= 1'b0;
 				s_addr <= 1'b0;
-				//we3 <= 1'b0;
-				//wez <= 1'b0;
-				//wes <= 1'b0;
 				op_alu <= 3'b000; // don't care
 				push <= 1'b0;
 				pop <= 1'b0;
@@ -383,9 +347,6 @@ module control_unit (
 				s_wd3 <= 2'b00; // don't care
 				s_io_wr <= 1'b0;
 				s_addr <= 1'b1;
-				//we3 <= 1'b0;
-				//wez <= 1'b0;
-				//wes <= 1'b0;
 				op_alu <= 3'b000; // don't care
 				push <= 1'b0;
 				pop <= 1'b0;
@@ -396,9 +357,6 @@ module control_unit (
 				s_wd3 <= 2'b10; // don't care
 				s_io_wr <= 1'b1;
 				s_addr <= 1'b1;
-				//we3 <= 1'b0;
-				//wez <= 1'b0;
-				//wes <= 1'b0;
 				op_alu <= 3'b000; // don't care
 				push <= 1'b0;
 				pop <= 1'b0;
@@ -408,9 +366,6 @@ module control_unit (
 				s_wd3 <= 2'b00; 
 				s_io_wr <= 1'b0;
 				s_addr <= 1'b0;
-				//we3 <= 1'b0;
-				//wez <= 1'b0;
-				//wes <= 1'b0;
 				op_alu <= 3'b000;
 				push <= 1'b0;
 				pop <= 1'b0;
@@ -420,9 +375,6 @@ module control_unit (
 				s_wd3 <= 2'b00; 
 				s_io_wr <= 1'b0;
 				s_addr <= 1'b0;
-				//we3 <= 1'b0;
-				//wez <= 1'b0;
-				//wes <= 1'b0;
 				op_alu <= 3'b000;
 				push <= 1'b0;
 				pop <= 1'b0;

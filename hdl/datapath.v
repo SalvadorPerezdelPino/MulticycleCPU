@@ -12,7 +12,7 @@ module datapath #(
 	input wire push, pop,
 	// ALU
 	input wire [2:0] op_alu, 
-	output wire z, s,
+	output wire zero, sign, carry, overflow,
 	output wire [5:0] opcode, 
 	output wire [9:0] dir,
 	// I/O
@@ -26,7 +26,7 @@ module datapath #(
 	wire [9:0] jmp_pc, jmp_pc_latch, inc_pc, inc_pc_latch, next_pc, ret_dir/*, next_pc_latch*/;
 	wire [DATA_WIDTH-1:0] inm, alu_res, rd1, rd2, wd3, alu_inm, data_to_io, data_from_io;
 	wire [7:0] inm_to_mem; // No aumenta por diseño
-	wire z_alu, s_alu;
+	wire z_alu, s_alu, c_alu, o_alu;
 	wire [DATA_WIDTH-1:0] /*alu_latch,*/ rd1_latch, rd2_latch, inm_latch, wd3_latch/*, data_from_io_latch*/;
 	wire [ADDR_WIDTH-1:0] inst_addr;
 	
@@ -162,12 +162,14 @@ module datapath #(
 
 	// ALU para operaciones
 	alu alu1 (
-		.a      (rd1_latch), 
-		.b      (rd2_latch), 
-		.op_alu (op_alu), 
-		.y      (alu_res), 
-		.zero   (z_alu),
-		.sign   (s_alu)
+		.a      		(rd1_latch), 
+		.b      		(rd2_latch), 
+		.op_alu 		(op_alu), 
+		.y      		(alu_res), 
+		.zero   		(z_alu),
+		.sign   		(s_alu),
+		.carry  		(c_alu),
+		.overflow	(o_alu)
 	);
 	
 	// Registro intermedio para almacenar el resultado de la ALU durante la fase EX
@@ -185,7 +187,7 @@ module datapath #(
 		.reset (reset), 
 		.d		 (z_alu), 
 		.carga (we_alu), 
-		.q		 (z)
+		.q		 (zero)
 	);
 	
 	// Flag de signo en las operaciones ALU
@@ -194,7 +196,23 @@ module datapath #(
 		.reset (reset), 
 		.d		 (s_alu), 
 		.carga (we_alu), 
-		.q		 (s)
+		.q		 (sign)
+	);
+	
+	ffd ffc (
+		.clk	 (clk), 
+		.reset (reset), 
+		.d		 (c_alu), 
+		.carga (we_alu), 
+		.q		 (carry)
+	);
+	
+	ffd ffo (
+		.clk	 (clk), 
+		.reset (reset), 
+		.d		 (o_alu), 
+		.carga (we_alu), 
+		.q		 (overflow)
 	);
 	
 	// Driver de acceso al bus de datos y direcciones

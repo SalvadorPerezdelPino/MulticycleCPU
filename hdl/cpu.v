@@ -12,7 +12,7 @@ module cpu #(
 );
 	 
    //Procesador sin memoria de datos de un solo ciclo
-	wire z, s;
+	wire zero, sign, carry, overflow;
 	wire s_inm, s_io_wr, s_addr;
 	wire [1:0] s_wd3, s_pc;
 	wire push, pop;
@@ -22,8 +22,10 @@ module cpu #(
 
 	control_unit cu1 (
 		.opcode 		(opcode), 
-	   .z      		(z),
-		.s				(s),
+	   .zero      	(zero),
+		.sign			(sign),
+		.carry		(carry),
+		.overflow	(overflow),
 		.clk			(clk),
 		.reset		(reset),
 	   .s_pc  		(s_pc), 
@@ -65,8 +67,10 @@ module cpu #(
 		.we_rmem		(we_rmem),
 		.we_wd3		(we_wd3),
 		.op_alu   	(op_alu), 
-		.z      	 	(z), 
-		.s				(s),
+		.zero      	(zero), 
+		.sign			(sign),
+		.carry		(carry),
+		.overflow	(overflow),
 		.opcode 	 	(opcode), 
 		.dir    	 	(pc),
 		.bus_data 	(bus_data),

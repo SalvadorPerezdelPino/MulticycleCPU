@@ -4,7 +4,7 @@ module program_memory (
 	output wire [31:0] inst
 );
 
-	reg [31:0] mem [0:63];
+	reg [31:0] mem [0:127];
 
 	initial
 	begin
