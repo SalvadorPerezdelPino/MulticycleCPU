@@ -1,5 +1,4 @@
 module program_memory (
-	input wire clk, 
 	input wire [9:0] addr, 
 	output wire [31:0] inst
 );

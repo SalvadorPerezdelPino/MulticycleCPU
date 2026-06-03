@@ -16,7 +16,7 @@ module cpu #(
 	wire s_inm, s_io_wr, s_addr;
 	wire [1:0] s_wd3, s_pc;
 	wire push, pop;
-	wire we3, wez, wes, we_pc, we_alu, we_reg, we_next_pc, we_rmem, we_wd3;
+	wire we3, wez, wes, we_pc, we_alu, we_reg, we_next_pc, we_wd3;
 	wire [2:0] op_alu;
 	wire [5:0] opcode;
 
@@ -36,7 +36,6 @@ module cpu #(
 		.we_pc		(we_pc),
 		.we_alu  	(we_alu),
 		.we_reg		(we_reg),
-		.we_rmem		(we_rmem),
 		.we_wd3		(we_wd3),
 	   .op_alu 		(op_alu),
 		.read	  		(read),
@@ -64,7 +63,6 @@ module cpu #(
 		.we_pc		(we_pc),
 		.we_alu		(we_alu),
 		.we_reg		(we_reg),
-		.we_rmem		(we_rmem),
 		.we_wd3		(we_wd3),
 		.op_alu   	(op_alu), 
 		.zero      	(zero), 

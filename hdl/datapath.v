@@ -7,7 +7,7 @@ module datapath #(
 	// Control del camino de datos
 	input wire s_io_wr, s_addr,
 	input wire [1:0] s_wd3, s_pc,
-	input wire we3, we_pc, we_alu, we_reg, we_rmem, we_wd3,
+	input wire we3, we_pc, we_alu, we_reg, we_wd3,
 	// Control de la pila
 	input wire push, pop,
 	// ALU
@@ -115,9 +115,7 @@ module datapath #(
 	);
 	
 	// Memoria que contiene el programa
-	localparam PROGFILE = "C:/Users/Usuario/Documents/clase/inf/TFG/FPGA/DE10/CPU/Multicycle/program.mem";
 	program_memory pm1 (
-		.clk (clk), 
 		.addr   (dir), 
 		.inst  (inst)
 	);
@@ -161,7 +159,9 @@ module datapath #(
 	
 
 	// ALU para operaciones
-	alu alu1 (
+	alu #(
+		.DATA_WIDTH(DATA_WIDTH)
+	) alu1 (
 		.a      		(rd1_latch), 
 		.b      		(rd2_latch), 
 		.op_alu 		(op_alu), 
@@ -216,7 +216,9 @@ module datapath #(
 	);
 	
 	// Driver de acceso al bus de datos y direcciones
-	cd_io cd_io0 (
+	cd_io #(
+		.WIDTH(DATA_WIDTH)
+	) cd_io0 (
 		.bus_data		(bus_data),
 		.data_from_cpu	(data_to_io),
 		.data_to_cpu	(data_from_io),

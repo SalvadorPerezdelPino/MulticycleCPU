@@ -51,7 +51,9 @@ module DE10(
 	wire [DATA_WIDTH-1:0] ram_out;
 	assign bus_data = (read) ? ram_out : {DATA_WIDTH{1'bz}};
 	
-	single_port_ram mem1 (
+	single_port_ram #(
+		.DATA_WIDTH (DATA_WIDTH)
+	) mem1 (
 		.address	(bus_addr),
 		.clock	(clk_bram),
 		.data		(ram_in),

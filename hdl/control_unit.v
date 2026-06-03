@@ -4,7 +4,7 @@ module control_unit (
 	input wire clk,
 	input wire reset,
 	output reg s_addr, s_io_wr, we3, push, pop,
-	output reg we_pc, we_alu, we_reg, we_rmem, we_wd3,
+	output reg we_pc, we_alu, we_reg, we_wd3,
 	output reg [1:0] s_wd3, s_pc,
 	output reg [2:0] op_alu, 
 	output reg read, 
@@ -93,7 +93,6 @@ module control_unit (
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
 				we3 <= 1'b0;
-				we_rmem <= 1'b0;
 				read <= 1'b0;
 				write <= 1'b0;
 				we_wd3 <= 1'b0;
@@ -104,7 +103,6 @@ module control_unit (
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
 				we3 <= 1'b0;
-				we_rmem <= 1'b0;
 				read <= 1'b0;
 				write <= 1'b0;
 				we_wd3 <= 1'b0;
@@ -115,7 +113,6 @@ module control_unit (
 				we_reg <= 1'b1;
 				we_alu <= 1'b0;
 				we3 <= 1'b0;
-				we_rmem <= 1'b0;
 				read <= 1'b0;
 				write <= 1'b0;
 				we_wd3 <= 1'b0;
@@ -126,7 +123,6 @@ module control_unit (
 				we_reg <= 1'b0;
 				we_alu <= 1'b1;
 				we3 <= 1'b0;
-				we_rmem <= 1'b0;
 				read <= 1'b0;
 				write <= 1'b0;
 				we_wd3 <= 1'b1;
@@ -137,7 +133,6 @@ module control_unit (
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
 				we3 <= 1'b1;
-				we_rmem <= 1'b0;
 				read <= 1'b0;
 				write <= 1'b0;
 				we_wd3 <= 1'b0;
@@ -148,7 +143,6 @@ module control_unit (
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
 				we3 <= 1'b0;
-				we_rmem <= 1'b0;
 				read <= 1'b0;
 				write <= 1'b0;
 				we_wd3 <= 1'b0;
@@ -159,7 +153,6 @@ module control_unit (
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
 				we3 <= 1'b0;
-				we_rmem <= 1'b0;
 				read <= 1'b0;
 				write <= 1'b0;
 				we_wd3 <= 1'b0;
@@ -170,7 +163,6 @@ module control_unit (
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
 				we3 <= 1'b0;
-				we_rmem <= 1'b1;
 				read <= 1'b1;
 				write <= 1'b0;
 				we_wd3 <= 1'b1;
@@ -181,7 +173,6 @@ module control_unit (
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
 				we3 <= 1'b0;
-				we_rmem <= 1'b0;
 				read <= 1'b0;
 				write <= 1'b1;
 				we_wd3 <= 1'b0;
@@ -192,7 +183,6 @@ module control_unit (
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
 				we3 <= 1'b0;
-				we_rmem <= 1'b0;
 				read <= 1'b0;
 				write <= 1'b0;
 				we_wd3 <= 1'b0;
@@ -203,7 +193,6 @@ module control_unit (
 				we_reg <= 1'b0;
 				we_alu <= 1'b0;
 				we3 <= 1'b0;
-				we_rmem <= 1'b0;
 				read <= 1'b0;
 				write <= 1'b0;
 				we_wd3 <= 1'b0;
