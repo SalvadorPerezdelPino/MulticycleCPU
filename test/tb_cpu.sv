@@ -1,11 +1,13 @@
 `timescale 1 ns / 10 ps
 
 module tb_cpu;
-	reg clk, clk_bram;
+	reg clk;
+	reg clk_bram;
 	reg reset;
 	wire [9:0] pc;
+	wire [5:0] opcode;
 	reg [9:0] old_pc;
-	
+
 	always #10 clk = ~clk;
 	
 	always #5 clk_bram = ~clk_bram;
@@ -21,11 +23,10 @@ module tb_cpu;
 	wire [ADDR_WIDTH-1:0] bus_addr;
 	wire [DATA_WIDTH-1:0] bus_data;
 	
-	
-	// Address map
-	localparam MEM_ADDR   = 20'h00000;
-	
-	cpu cpu1 (
+	cpu #(
+		.ADDR_WIDTH	(ADDR_WIDTH), 
+		.DATA_WIDTH	(DATA_WIDTH)
+	) cpu1 (
 		.clk   		(clk),
 		.reset 		(reset), 
 		.pc    		(pc),
@@ -52,7 +53,9 @@ module tb_cpu;
 	wire [DATA_WIDTH-1:0] ram_out;
 	assign bus_data = (read) ? ram_out : {DATA_WIDTH{1'bz}};
 	
-	single_port_ram mem1 (
+	single_port_ram #(
+		.DATA_WIDTH(DATA_WIDTH)
+	) mem1 (
 		.address	(bus_addr),
 		.clock	(clk_bram),
 		.data		(ram_in),
@@ -69,10 +72,11 @@ module tb_cpu;
 	string input_filename;
 	string expected_filename;
 	string csv_filename;
-	string wave_filename;
+	string error_filename;
 	integer input_fd;
 	integer expected_fd;
 	integer csv_fd;
+	integer error_fd;
 	
 	string id;
 	integer j;
@@ -80,14 +84,19 @@ module tb_cpu;
 		// Get test parameters
 		$value$plusargs("DIR=%s", dir);
 		$value$plusargs("ID=%s", id);
-		input_filename = {dir, "/input_", id, ".mem"};
-		expected_filename = {dir, "/expected_", id, ".mem"};
-		csv_filename = {dir, "/data_", id, ".csv"};
+		input_filename = {dir, "/input", ".mem"};
+		error_filename = {dir, "/error.log"};
+		expected_filename = {dir, "/expected", ".mem"};
+		csv_filename = {dir, "/output", ".csv"};
 
 		// Check file openings
+		error_fd = $fopen(error_filename, "w");
 		input_fd = $fopen(input_filename, "r");
 		expected_fd = $fopen(expected_filename, "r");
 		csv_fd = $fopen(csv_filename, "w");
+		if (error_fd == 0) begin
+			$fatal("Error opening error log file: %s", input_filename);
+		end
 		if (input_fd == 0) begin
 			$fatal("Error opening input file: %s", input_filename);
 		end
@@ -102,8 +111,6 @@ module tb_cpu;
 		$display("Test ID: %0d", id);
 		
 		// Start values
-		clk = 1;
-		clk_bram = 1;
 		cycles = 0;
 		mem_reads = 0;
 		mem_writes = 0;
@@ -111,9 +118,11 @@ module tb_cpu;
 		old_pc = -1;
 		
 		// Read input memory
-		for (j = 0; j < 2048; j = j + 1) begin
+		for (j = 0; j < 4096; j = j + 1) begin
 			$fscanf(input_fd, "%b", mem1.buffer[j]);
 		end
+		clk = 0;
+		clk_bram = 0;
 		
 		reset = 1;
 		#10;
@@ -147,19 +156,21 @@ module tb_cpu;
 			$display("Total instructions: %d", instructions);
 			cpi = cycles / instructions;
 			$display("CPI: %.4f\n", cpi);
+			$fdisplay(error_fd, "CORRECT");
 			$fdisplay(csv_fd, "%0d;%0d;%0d;%0d;%0d;%0d,%0d;%0d;%0d", id, 
 					expected_solution, hw_solution, cycles, instructions, $rtoi(cpi), $rtoi((cpi - $rtoi(cpi)) * 10000), mem_reads, mem_writes);
 		end
 		else begin
 			$display("Problem FAILED");
-			$display("Expected solution: %d", expected_solution);
-			$display("Hardware solution: %d\n", hw_solution);
+			$display("Expected solution: %0d", expected_solution);
+			$display("Hardware solution: %0d\n", hw_solution);
 			$display("Total cycles: %d", cycles);
 			$display("Total memory reads: %d", mem_reads);
 			$display("Total memory writes: %d", mem_writes);
 			$display("Total instructions: %d", instructions);
 			cpi = cycles / instructions;
 			$display("CPI: %.4f\n", cpi);
+			$fdisplay(error_fd, "FAILED");
 			$finish(1);
 		end
 
@@ -167,6 +178,7 @@ module tb_cpu;
 		$fclose(input_fd);
 		$fclose(expected_fd);
 		$fclose(csv_fd);
+		$fclose(error_fd);
 		$finish();
 	end
 
